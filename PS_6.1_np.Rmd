@@ -1,0 +1,76 @@
+---
+title: "Non-Parametric Econometrics PS-6 Exercise 1"
+author: "Ferhat Kutluca"
+date: "2024-02-13"
+output:
+html_document: default
+pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Load Libraries
+
+```{r}
+
+library(np)
+library(MASS)
+
+```
+
+
+### Set Parameters
+
+```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# Define the sample size and number of random samples
+n <- 500
+S <- 100
+
+delta <- 1
+beta_hat <- numeric(S)
+delta_hat <- numeric(S)
+
+```
+
+
+### Generate Data and Estimate Parameters
+
+```{r}
+for (s in 1:S) {
+  Z <- runif(n)
+  T <- rbinom(n, 1, prob = sin(2*Z))
+  g <- 5*sin(3*Z) + Z^4
+  u <- runif(n, min = -1, max = 1)
+  Y <- delta*T + g + u
+  
+  model <- lm(Y ~ T)
+  beta_hat[s] <- coef(model)["T"]
+  
+  E_T_Z <- npreg(txdat=Z, tydat=T, multistart = FALSE)$mean
+  E_Y_Z <- npreg(txdat=Z, tydat=Y, multistart = FALSE)$mean
+  model_rt <- lm(I(Y - E_Y_Z) ~ I(T - E_T_Z))
+  delta_hat[s] <- coef(model_rt)["I(T - E_T_Z)"]
+}
+
+
+```
+
+### Report Results
+
+```{r}
+
+cat("Average slope coefficient (delta estimate):", mean(beta_hat), "\n")
+cat("Average delta estimate using Robinson's Transformation:", mean(delta_hat), "\n")
+
+```
+(i) The average slope coefficient (delta estimate) obtained by regressing $Y_i$ on $T_i$ ignoring the component $g(Z_i)$ is **2.378575 (S = 100)**; **2.381133 (S = 1000)**. However, this is different from the true $δ$ value of 1. This is not a good estimator of $δ(1)$. This could be a result of ignoring the $g(Z_i)$ component in the model. This component could influence the relationship between $Y_i$ and $T_i$, and therefore, ignoring this component could lead to a misleading estimate of $δ$.
+
+(ii) The average delta estimate obtained using Robinson's Transformation is **0.9860977 (S = 100)**; **0.9900204 (S = 1000)**. This value is quite close to the true delta value of 1 and the estimator is centered correctly around $δ(1)$. This suggests that Robinson's Transformation, by accounting for the $g(Z_i)$ component in the model, provides a more accurate estimate of $δ$.
+
+Therefore, the estimate obtained using Robinson's Transformation is more accurate than the estimate obtained by ignoring the $g(Z_i)$ component. This demonstrates the effectiveness of Robinson's Transformation in estimating partially linear models. This demonstrates the effectiveness of Robinson's Transformation in estimating partially linear models.
